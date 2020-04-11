@@ -1,0 +1,68 @@
+<div class="jumbotron jumbotron-fluid" id="jumbo">
+  <div class="container">
+    <div *ngIf="movieData != undefined; then infoBlock"></div>"
+    <ng-template #infoBlock>
+      <h1 class="display-4">{{movieData.title}}</h1>
+    <p class="lead">{{movieData.year}}</p>
+    </ng-template>
+  </div>
+</div>
+
+<mat-tab-group dynamicHeight>
+  <div *ngIf="movieData != undefined; then displayBlocks"></div>
+  <ng-template #displayBlocks>
+
+    <mat-tab label="Rating" class="rating_tab">
+
+
+          <div class="rating_info">
+            <div class="card" style="width: 18rem;">
+              <div class="card-body">
+                <h5 class="card-title rating_title">{{movieData.rating}}</h5>
+
+              </div>
+            </div>
+          </div>
+
+
+    </mat-tab>
+
+    <mat-tab label="Director" class="director">
+      <div class="rating_info">
+        <div class="card" style="width: 18rem;">
+          <div class="card-body">
+            <h5 class="card-title director_title">{{movieData.director}}</h5>
+
+          </div>
+        </div>
+      </div>
+    </mat-tab>
+
+    <mat-tab label="Actors" >
+      <ul class="list-group">
+        <div *ngFor="let actor of movieData['actors']">
+          <a routerLink="/api/movies/actor/{{actor.id}}">
+
+            <li class="list-group-item">
+              <button mat-button>
+              {{actor.name}}
+            </button>
+            </li>
+
+          </a>
+        </div>
+      </ul>
+    </mat-tab>
+    <mat-tab label="Genre">
+      <ul class="list-group">
+        <a>
+          <li class="list-group-item" *ngFor="let genre of parseGenreList(movieData.genres)">
+            {{genre}}
+          </li>
+        </a>
+      </ul>
+    </mat-tab>
+
+  </ng-template>
+
+</mat-tab-group>

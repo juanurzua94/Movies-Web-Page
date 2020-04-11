@@ -1,0 +1,46 @@
+<div class="jumbotron jumbotron-fluid" id="jubmo">
+  <div class="container">
+
+    <div *ngIf="actorData != undefined; then nameBlock; else loadingBlock"></div>
+
+    <ng-template #nameBlock>
+      <h1 class="display-4">{{actorData.name}}</h1>
+    </ng-template>
+
+    <ng-template #loadingBlock>
+      <h1 class="display-4">Loading...</h1>
+    </ng-template>
+
+    <p class="lead">
+
+      <span *ngIf="actorData != undefined && actorData.birthYear != null; then thenBlock; else elseBlock"></span>
+
+      <ng-template #thenBlock>
+        <p>{{actorData.birthYear}}</p>
+      </ng-template>
+
+      <ng-template #elseBlock>
+        <p>N/A</p>
+      </ng-template>
+
+    </p>
+  </div>
+</div>
+
+<mat-tab-group>
+  <mat-tab label="Movies">
+    <ul class="list-group">
+      <div *ngFor="let movie of starredInMovies">
+      <a routerLink="/api/movies/movie/{{movie}}">
+      <li class="list-group-item">
+        <button mat-button>
+          {{movie}}
+        </button>
+      </li>
+      </a>
+      </div>
+    </ul>
+  </mat-tab>
+</mat-tab-group>
+
+
