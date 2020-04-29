@@ -1,0 +1,55 @@
+<div *ngIf="added; then addedBlock"></div>
+<div *ngIf="subtracted; then subtractedBlock"></div>
+<div *ngIf="deleted; then deletedBlock"></div>
+
+<ng-template #addedBlock>
+  <div class="alert alert-success" role="alert">
+    Successfully added an extra copy!
+  </div>
+</ng-template>
+
+<ng-template #subtractedBlock>
+  <div class="alert alert-warning" role="alert">
+    Successfully subtracted a copy.
+  </div>
+</ng-template>
+
+<ng-template #deletedBlock>
+  <div class="alert alert-info" role="alert">
+    Movie has been deleted from your shopping cart.
+  </div>
+</ng-template>
+
+
+<table class="table table-bordered">
+  <thead>
+    <tr>
+
+      <th scope="col">Title</th>
+      <th scope="col">Quantity</th>
+      <th scope="col">Options</th>
+      <th scope="col">Price</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr *ngFor="let item of items">
+
+      <td>{{item[0]}}</td>
+      <td>{{item[1]['quantity']}}</td>
+      <td>
+        <button class="btn btn-light" (click)="removeItem(item[0])">
+          Subtract
+        </button>
+        <button class="btn btn-success" (click)="addItem(item[0])">
+          Add
+        </button>
+        <button class="btn btn-danger" (click)="deleteItem(item[0])">
+          Delete
+        </button>
+      </td>
+      <td>${{item[2]}}</td>
+    </tr>
+  </tbody>
+</table>
+
+<button class="btn btn-lg btn-primary" (click)="initiatePaymentPage()">Pay ${{totalPrice}}</button>

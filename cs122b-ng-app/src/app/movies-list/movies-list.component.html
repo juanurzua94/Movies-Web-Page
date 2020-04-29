@@ -1,46 +1,209 @@
+<div *ngIf="added; then addedBlock"></div>
+<ng-template #addedBlock>
+  <div class="alert alert-success" role="alert">
+    You successfully added the movie to your shopping cart!
+  </div>
+</ng-template>
+
+<!--
+<button mat-button (click)="sortByTitle()">
+  Sort by Title
+</button>
+
+
+<button mat-button (click)="sortByRating()">
+  Sort by Rating
+</button>
+
+
+<table class="table">
+  <thead class="thead-dark">
+    <tr>
+      <th scope="col">Title</th>
+      <th scope="col">Year</th>
+      <th scope="col">Director</th>
+      <th scope="col">Rating</th>
+      <th scope="col">Actors</th>
+      <th scope="col">Genres</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr *ngFor="let movie of moviesForDisplay">
+      <th>
+        <a routerLink="/api/movies/movie/{{movie.title}}">
+          <button mat-button>
+            {{movie.title}}
+          </button>
+        </a>
+        <button class="btn btn-primary btn-sm" (click)="addToShoppingCart(movie.title, movie.id)">
+          Add to Shopping Cart
+        </button>
+      </th>
+      <td>
+        {{movie.year}}
+      </td>
+      <td>
+        {{movie.director}}
+      </td>
+      <td>
+        {{movie.rating}}
+      </td>
+      <td>
+        <button mat-button [matMenuTriggerFor]="menu">Show</button>
+        <mat-menu #menu="matMenu">
+
+          <a routerLink="/api/movies/actor/{{ movie.actors | actorUrlPipe:0 }}">
+          <button mat-menu-item>
+            {{movie.actors | convertMyList | slice:0:1}}
+          </button></a>
+
+          <div *ngIf="myEval(movie.actors).length > 1; then nextBlock; else noneBlock"></div>
+
+          <ng-template #nextBlock>
+
+            <a routerLink="/api/movies/actor/{{ movie.actors | actorUrlPipe:1 }}">
+              <button mat-menu-item>
+                {{movie.actors | convertMyList | slice:1:2}}
+              </button></a>
+
+              <div *ngIf="myEval(movie.actors).length > 2; then lastBlock; else lastNoneBlock"></div>
+
+              <ng-template #lastBlock>
+                <a routerLink="/api/movies/actor/{{ movie.actors | actorUrlPipe:2 }}">
+                  <button mat-menu-item >
+                    {{movie.actors | convertMyList | slice:2:3}}
+                  </button></a>
+              </ng-template>
+
+              <ng-template #lastNoneBlock>
+                <button mat-menu-item>
+                  N/A
+                </button>
+              </ng-template>
+
+            </ng-template>
+
+            <ng-template #noneBlock>
+              <button mat-menu-item>
+                N/A
+              </button>
+              <button mat-menu-item>
+                N/A
+              </button>
+            </ng-template>
+
+          </mat-menu>
+         </td>
+
+
+
+      <td>
+        <button mat-button [matMenuTriggerFor]="genre_menu">Show</button>
+        <mat-menu #genre_menu="matMenu">
+          <a routerLink="/api/movies/genre/{{ movie.genres | convertMyGenreList | slice:0:1 }}">
+          <button mat-menu-item>
+            {{ movie.genres | convertMyGenreList | slice:0:1 }}
+          </button></a>
+          <a routerLink="/api/movies/genre/{{ movie.genres | convertMyGenreList | slice:1:2 }}">
+          <button mat-menu-item *ngIf="movie.genres.length > 1" >
+            {{ movie.genres | convertMyGenreList | slice:1:2 }}
+          </button></a>
+          <a routerLink="/api/movies/genre/{{ movie.genres | convertMyGenreList | slice:2:3 }}">
+          <button mat-menu-item *ngIf="movie.genres.length > 2" >
+            {{ movie.genres | convertMyGenreList | slice:2:3 }}
+          </button></a>
+        </mat-menu>
+      </td>
+
+    </tr>
+  </tbody>
+</table>
+
+<button mat-button>
+  Displaying {{itemsToDisplay}} Items
+</button>
+
+<button mat-button [matMenuTriggerFor]="items_per"># of items</button>
+
+<mat-menu #items_per="matMenu">
+    <button mat-menu-item (click)="setItemsPer(10)">
+            10
+    </button>
+    <button mat-menu-item (click)="setItemsPer(25)">
+          25
+    </button>
+    <button mat-menu-item (click)="setItemsPer(50)">
+          50
+    </button>
+
+    <button mat-menu-item (click)="setItemsPer(100)">
+          100
+    </button>
+</mat-menu>
+
+<button mat-button (click)="displayPrevItems()">
+  Previous
+</button>
+
+<button mat-button (click)="displayNextItems()">
+  Next
+</button>
+-->
+
+<button mat-button (click)="sortByTitle()">
+  Sort by Title
+</button>
+
+
+<button mat-button (click)="sortByRating()">
+  Sort by Rating
+</button>
+
+
 <div class="mat-elevation-z8">
   <table mat-table [dataSource]="dataSource">
 
 
-    <!-- Name Column -->
+
     <ng-container matColumnDef="title">
       <th mat-header-cell *matHeaderCellDef> title </th>
 
         <td mat-cell *matCellDef="let element">
-          <a routerLink="movie/{{element.title}}">
+          <a routerLink="/api/movies/movie/{{element.title}}">
             <button mat-button>
               {{element.title}}
             </button>
           </a>
+          <button class="btn btn-primary btn-sm" (click)="addToShoppingCart(element.title, element.id)">
+            Add to Shopping Cart
+          </button>
         </td>
     </ng-container>
 
-    <!-- Weight Column -->
     <ng-container matColumnDef="year">
       <th mat-header-cell *matHeaderCellDef> Year </th>
       <td mat-cell *matCellDef="let element"> {{element.year}} </td>
     </ng-container>
 
-    <!-- Symbol Column -->
+
     <ng-container matColumnDef="director">
       <th mat-header-cell *matHeaderCellDef> director </th>
       <td mat-cell *matCellDef="let element"> {{element.director}} </td>
     </ng-container>
 
-     <!-- Position Column -->
+
      <ng-container matColumnDef="rating">
       <th mat-header-cell *matHeaderCellDef> rating </th>
       <td mat-cell *matCellDef="let element"> {{element.rating}} </td>
     </ng-container>
 
-    <!-- Position Column -->
     <ng-container matColumnDef="actors">
       <th mat-header-cell *matHeaderCellDef> actors </th>
       <td mat-cell *matCellDef="let element">
         <button mat-button [matMenuTriggerFor]="menu">Show</button>
         <mat-menu #menu="matMenu">
 
-          <a routerLink="actor/{{ element.actors | actorUrlPipe:0 }}">
+          <a routerLink="/api/movies/actor/{{ element.actors | actorUrlPipe:0 }}">
           <button mat-menu-item>
             {{element.actors | convertMyList | slice:0:1}}
           </button></a>
@@ -49,7 +212,7 @@
 
           <ng-template #nextBlock>
 
-            <a routerLink="actor/{{ element.actors | actorUrlPipe:1 }}">
+            <a routerLink="/api/movies/actor/{{ element.actors | actorUrlPipe:1 }}">
               <button mat-menu-item>
                 {{element.actors | convertMyList | slice:1:2}}
               </button></a>
@@ -57,7 +220,7 @@
               <div *ngIf="myEval(element.actors).length > 2; then lastBlock; else lastNoneBlock"></div>
 
               <ng-template #lastBlock>
-                <a routerLink="actor/{{ element.actors | actorUrlPipe:2 }}">
+                <a routerLink="/api/movies/actor/{{ element.actors | actorUrlPipe:2 }}">
                   <button mat-menu-item >
                     {{element.actors | convertMyList | slice:2:3}}
                   </button></a>
@@ -85,21 +248,20 @@
       </td>
     </ng-container>
 
-    <!-- Position Column -->
     <ng-container matColumnDef="genres">
       <th mat-header-cell *matHeaderCellDef> genres </th>
       <td mat-cell *matCellDef="let element">
         <button mat-button [matMenuTriggerFor]="menu">Show</button>
         <mat-menu #menu="matMenu">
-          <a>
+          <a routerLink="/api/movies/genre/{{ element.genres | convertMyGenreList | slice:0:1 }}">
           <button mat-menu-item>
             {{ element.genres | convertMyGenreList | slice:0:1 }}
           </button></a>
-          <a>
+          <a routerLink="/api/movies/genre/{{ element.genres | convertMyGenreList | slice:1:2 }}">
           <button mat-menu-item *ngIf="element.genres.length > 1" >
             {{ element.genres | convertMyGenreList | slice:1:2 }}
           </button></a>
-          <a>
+          <a routerLink="/api/movies/genre/{{ element.genres | convertMyGenreList | slice:2:3 }}">
           <button mat-menu-item *ngIf="element.genres.length > 2" >
             {{ element.genres | convertMyGenreList | slice:2:3 }}
           </button></a>
@@ -109,11 +271,12 @@
 
     </ng-container>
 
+
     <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
     <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
   </table>
 
-  <mat-paginator [pageSizeOptions]="[20]" showFirstLastButtons></mat-paginator>
+  <mat-paginator [pageSizeOptions]="[10, 25, 50, 100]" [length]="1000" ></mat-paginator>
 
 </div>
 

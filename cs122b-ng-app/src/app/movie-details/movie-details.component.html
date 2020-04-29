@@ -1,3 +1,11 @@
+<div *ngIf="added; then successBlock"></div>
+
+<ng-template #successBlock>
+  <div class="alert alert-success" role="alert">
+    Successfully added {{movieData.title}} to shopping cart!
+  </div>
+</ng-template>
+
 <div class="jumbotron jumbotron-fluid" id="jumbo">
   <div class="container">
     <div *ngIf="movieData != undefined; then infoBlock"></div>"
@@ -5,6 +13,7 @@
       <h1 class="display-4">{{movieData.title}}</h1>
     <p class="lead">{{movieData.year}}</p>
     </ng-template>
+    <button class="btn btn-primary" (click)="addToShoppingCart(movieData.title, movieData.id)">Add to Shopping Cart</button>
   </div>
 </div>
 
@@ -55,8 +64,8 @@
     </mat-tab>
     <mat-tab label="Genre">
       <ul class="list-group">
-        <a>
-          <li class="list-group-item" *ngFor="let genre of parseGenreList(movieData.genres)">
+        <a *ngFor="let genre of parseGenreList(movieData.genres)" routerLink="/api/movies/genre/{{genre}}">
+          <li class="list-group-item" >
             {{genre}}
           </li>
         </a>

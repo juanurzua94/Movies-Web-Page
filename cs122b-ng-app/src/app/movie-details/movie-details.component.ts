@@ -1,6 +1,6 @@
 import  { Component, OnInit, OnDestroy } from '@angular/core';
 import { ConfigService } from '../movies-list/movies-list.service';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { Subscription } from 'rxjs';
 
 @Component({
@@ -13,9 +13,16 @@ export class MovieDetailsComponent implements OnInit , OnDestroy{
   movieInfo : Subscription;
   movieData : any;
 
-  constructor(private _ActivatedRoute: ActivatedRoute, private service : ConfigService) { }
+  recentAdd : string;
+
+  added : boolean;
+
+  constructor(private _ActivatedRoute: ActivatedRoute, private service : ConfigService, private router: Router) { }
 
   ngOnInit() {
+    if(this.service.isLoggedIn() == "N"){
+      this.router.navigate(['api/login']);
+    } else {
     this.service.getMovie(this._ActivatedRoute.snapshot.paramMap.get("movieName"));
     this.movieInfo = this.service.getMovieInfoUpdateListener()
     .subscribe(movieInfo => {
@@ -23,6 +30,12 @@ export class MovieDetailsComponent implements OnInit , OnDestroy{
         this.movieData['actors'] = eval(this.movieData['actors']);
 
     })
+    }
+  }
+
+  addToShoppingCart(data : string, dataid: string){
+    this.service.addToShoppingCart(data, dataid);
+    this.added = true;
   }
 
   parseGenreList(items){
@@ -32,7 +45,8 @@ export class MovieDetailsComponent implements OnInit , OnDestroy{
   }
 
   ngOnDestroy(){
-    this.movieInfo.unsubscribe();
+    if(this.service.isLoggedIn() == "Y")
+      this.movieInfo.unsubscribe();
   }
 
 }

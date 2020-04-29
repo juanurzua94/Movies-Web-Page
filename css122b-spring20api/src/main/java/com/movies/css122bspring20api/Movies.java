@@ -1,15 +1,19 @@
 package com.movies.css122bspring20api;
 import org.springframework.web.bind.annotation.*;
+import sun.misc.Request;
 
+import javax.xml.crypto.Data;
 import java.net.PasswordAuthentication;
 import java.sql.*;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
-@CrossOrigin(origins = "http://localhost:4200", maxAge = 3600)
+@CrossOrigin(maxAge = 3600)
 @RestController
-@RequestMapping(value = "/api")
+@RequestMapping(value = "/api/movies")
 public class Movies {
 
     //private HashMap<String, ArrayList<String>> movieList;
@@ -26,18 +30,36 @@ public class Movies {
     private Connection con = null;
     private final String DBURL = "jdbc:mysql://localhost:3306/moviedb";
     private final String USER = "root";
+    // private final String PASSWORD = "root";
+
     private final String PASSWORD = "root";
     public Movies(){
-        //movieList = new HashMap<>();
         movies = new ArrayList<>();
-        HashMap<String, String> temp = null;
-        /*
-        movieList.put("id", new ArrayList<String>());
-        movieList.put("title", new ArrayList<>());
-        movieList.put("year", new ArrayList<>());
-        movieList.put("director", new ArrayList<>());
-        */
+        try {
+            Class.forName(CLASSNAME);
 
+            con = DriverManager.getConnection(
+                    DBURL, USER, PASSWORD
+            );
+
+            Statement statement = con.createStatement();
+            statement.execute("Alter table stars add index(name)");
+            statement.execute("Alter table genres add index(name)");
+
+        } catch (Exception e){
+            e.printStackTrace();
+        } finally {
+
+                try{
+                    if(!con.isClosed())
+                        con.close();
+                } catch (Exception e){
+                    e.printStackTrace();
+                }
+
+        }
+        /*
+        HashMap<String, String> temp = null;
         try{
             Class.forName(CLASSNAME);
             con = DriverManager.getConnection(
@@ -47,7 +69,7 @@ public class Movies {
             ResultSet data = statement.executeQuery(
                     "select m.id, m.director, m.year, m.title, r.rating" +
                             " from movies as m, ratings as r" +
-                            " where m.id = r.movieid order by r.rating desc"
+                            " where m.id = r.movieid order by r.rating desc limit 20"
             );
             while(data.next()){
                     temp = new HashMap<>();
@@ -62,11 +84,61 @@ public class Movies {
 
 
                     movies.add(temp);
-                /*
-                movieList.get("id").add(data.getString("id"));
-                movieList.get("title").add(data.getString("title"));
-                movieList.get("year").add(data.getString("year"));
-                movieList.get("director").add(data.getString("director"));*/
+
+            }
+        }
+        catch(Exception e){
+            e.printStackTrace();
+        }*/
+
+    }
+
+    @RequestMapping(value="", method = RequestMethod.GET)
+    public ArrayList<HashMap<String, String>> movieList(){
+        return this.movies;
+    }
+
+
+
+    @RequestMapping(value = "/search", method = RequestMethod.GET)
+    public ArrayList<HashMap<String, String>> index(
+            @RequestParam("title") String title,
+            @RequestParam("director") String director,
+            @RequestParam("star") String star,
+            @RequestParam("year") String year
+    )
+    {
+        if(this.movies.size() > 0)
+            this.movies.clear();
+        String query = buildQuery(title, director, star, year);
+
+        HashMap<String, String> temp = null;
+
+        try{
+            Class.forName(CLASSNAME);
+            con = DriverManager.getConnection(
+                    DBURL, USER, PASSWORD
+            );
+
+            Statement statement = con.createStatement();
+            System.out.println(query);
+            ResultSet data = statement.executeQuery(query);
+
+            while(data.next()){
+
+                temp = new HashMap<>();
+
+                temp.put(ID, data.getString(ID));
+                temp.put(TITLE, data.getString(TITLE));
+                temp.put(YEAR, data.getString(YEAR));
+                temp.put(DIRECTOR, data.getString(DIRECTOR));
+                temp.put(RATING, data.getString(RATING));
+                temp.put(ACTORS, actorData(data.getString(ID), 3));
+                temp.put(GENRES, genreData(data.getString(ID), 3));
+
+
+                movies.add(temp);
+
             }
         }
         catch(Exception e){
@@ -80,14 +152,168 @@ public class Movies {
                 e.printStackTrace();
             }
         }
+
+        return this.movies;
+
     }
 
-    @RequestMapping(value = "/movies", method = RequestMethod.GET)
-    public ArrayList<HashMap<String, String>> index(){
+    @PostMapping(value = "/sales")
+    public HashMap<String, String> insertToSales(@RequestBody ArrayList<HashMap<String, String>> data){
+        HashMap<String, String> temp = new HashMap<>();
+
+        try{
+            Class.forName(CLASSNAME);
+            con = DriverManager.getConnection(
+                    DBURL, USER, PASSWORD
+            );
+
+            String query = "INSERT INTO sales (customerId, movieId, saleData) VALUES " + buildSalesValues(data);
+            System.out.println(query);
+            Statement statement = con.createStatement();
+            statement.executeUpdate(query);
+
+
+        } catch (Exception e){
+            e.printStackTrace();
+        } finally {
+            try{
+                if(!con.isClosed())
+                    con.close();
+            } catch (Exception e){
+                e.printStackTrace();
+            }
+        }
+
+        return temp;
+    }
+
+    @RequestMapping(value="/genres", method= RequestMethod.GET)
+    public ArrayList<String> getGenres()
+    {
+        ArrayList<String> genres = new ArrayList<>();
+
+        try{
+            Class.forName(CLASSNAME);
+            con = DriverManager.getConnection(
+                    DBURL, USER, PASSWORD
+            );
+            Statement statement = con.createStatement();
+            ResultSet genreData = statement.executeQuery(
+                    "SELECT genres.name from genres ORDER BY genres.name"
+            );
+
+            while(genreData.next()){
+                genres.add(genreData.getString("name"));
+            }
+
+        } catch(Exception e){
+            e.printStackTrace();
+        } finally{
+            try{
+                if(!con.isClosed())
+                    con.close();
+            } catch (Exception e){
+                e.printStackTrace();
+            }
+        }
+
+        return genres;
+    }
+
+    @RequestMapping(value="/title/{letter}", method = RequestMethod.GET)
+    public ArrayList<HashMap<String, String>> getMoviesByTitle(@PathVariable("letter") String letter){
+        if(this.movies.size() > 0)
+            this.movies.clear();
+        HashMap<String, String> temp;
+
+        try{
+            Class.forName(CLASSNAME);
+            con = DriverManager.getConnection(
+                    DBURL, USER, PASSWORD
+            );
+            Statement statement = con.createStatement();
+            ResultSet genreData = statement.executeQuery(
+                    "select m.id, m.director, m.year, m.title, r.rating" +
+                            " from movies as m, ratings as r " +
+                            " where m.id = r.movieid " +
+                            "and m.title LIKE \"" + letter + "%\" order by r.rating limit 1000"
+            );
+
+            while(genreData.next()){
+                temp = new HashMap<>();
+                temp.put(ID, genreData.getString(ID));
+                temp.put(TITLE, genreData.getString(TITLE));
+                temp.put(YEAR, genreData.getString(YEAR));
+                temp.put(DIRECTOR, genreData.getString(DIRECTOR));
+                temp.put(RATING, genreData.getString(RATING));
+                temp.put(ACTORS, actorData(genreData.getString(ID), 3));
+                temp.put(GENRES, genreData(genreData.getString(ID), 3));
+
+                this.movies.add(temp);
+            }
+
+        } catch(Exception e){
+            e.printStackTrace();
+        } finally{
+            try{
+                if(!con.isClosed())
+                    con.close();
+            } catch (Exception e){
+                e.printStackTrace();
+            }
+        }
+
         return this.movies;
     }
 
-    @RequestMapping(value = "/movies/movie/{name}", method = RequestMethod.GET)
+    @RequestMapping(value="/genre/{name}", method = RequestMethod.GET)
+    public ArrayList<HashMap<String, String>> getMoviesInGenre(@PathVariable("name") String name)
+    {
+        if(this.movies.size() > 0)
+            this.movies.clear();
+
+        HashMap<String, String> temp;
+        try{
+            Class.forName(CLASSNAME);
+            con = DriverManager.getConnection(
+                    DBURL, USER, PASSWORD
+            );
+            Statement statement = con.createStatement();
+            ResultSet genreData = statement.executeQuery(
+                    "select m.id, m.director, m.year, m.title, r.rating" +
+                            " from movies as m, ratings as r, genres as g, genres_in_movies as gim" +
+                            " where g.name = \"" + name + "\" and m.id = r.movieid " +
+                            "and g.id = gim.genreid " +
+                            "and m.id = gim.movieid order by r.rating limit 1000"
+            );
+
+            while(genreData.next()){
+                temp = new HashMap<>();
+                temp.put(ID, genreData.getString(ID));
+                temp.put(TITLE, genreData.getString(TITLE));
+                temp.put(YEAR, genreData.getString(YEAR));
+                temp.put(DIRECTOR, genreData.getString(DIRECTOR));
+                temp.put(RATING, genreData.getString(RATING));
+                temp.put(ACTORS, actorData(genreData.getString(ID), 3));
+                temp.put(GENRES, genreData(genreData.getString(ID), 3));
+
+                this.movies.add(temp);
+            }
+
+        } catch(Exception e){
+            e.printStackTrace();
+        } finally{
+            try{
+                if(!con.isClosed())
+                    con.close();
+            } catch (Exception e){
+                e.printStackTrace();
+            }
+        }
+        return this.movies;
+    }
+
+    @RequestMapping(value = "/movie/{name}", method = RequestMethod.GET)
     public HashMap<String, String> getMovieInfo(@PathVariable("name") String name){
         HashMap<String, String> movieInfo = new HashMap<>();
         try {
@@ -104,7 +330,7 @@ public class Movies {
             );
             movieData.next();
 
-
+            movieInfo.put("id", movieData.getString("id"));
             movieInfo.put("title" , movieData.getString("title"));
             movieInfo.put("director", movieData.getString("director"));
             movieInfo.put("year", movieData.getString("year"));
@@ -126,7 +352,7 @@ public class Movies {
         return movieInfo;
     }
 
-    @RequestMapping(value = "/movies/actor/{id}", method = RequestMethod.GET)
+    @RequestMapping(value = "/actor/{id}", method = RequestMethod.GET)
     public HashMap<String, String> getActorInfo(@PathVariable("id") String id){
         HashMap<String,String> response = new HashMap<>();
         try {
@@ -142,7 +368,8 @@ public class Movies {
             Statement s = con.createStatement();
             ResultSet actorMovies = s.executeQuery("select movies.title from" +
                     " movies, stars_in_movies as s " +
-                    "where s.starId = " + "\"" +  id + "\"" + " and movies.id = s.movieid");
+                    "where s.starId = " + "\"" +  id + "\"" + " and movies.id = s.movieid " +
+                    "order by movies.year desc, movies.title asc ");
 
             actorData.next();
             response.put("name" , actorData.getString("name"));
@@ -169,10 +396,17 @@ public class Movies {
 
       try {
           Statement s = con.createStatement();
+          String orderQuery = " order by (select count(*) as c from" +
+                  " stars as s, stars_in_movies as sim where" +
+                  " s.id = sim.starid and s.name like \"stars.name\" group by s.name " +
+                  ") desc";
+
           ResultSet actorsData = s.executeQuery("select stars.name, stars.id" +
                   " from stars, stars_in_movies as s " +
                   "where stars.id = s.starid and " +
-                  "s.movieid = " + "\"" + id + "\"" + " LIMIT " + Integer.toString(limit));
+                  "s.movieid = " + "\"" + id + "\"" + orderQuery + " LIMIT " + Integer.toString(limit));
+
+
           while(actorsData.next()){
               actors += String.format(actorFormat, actorsData.getString("name"), actorsData.getString("id"));
               actors += ", ";
@@ -192,7 +426,7 @@ public class Movies {
             ResultSet genreData = s.executeQuery("select genres.name" +
                     " from genres, genres_in_movies as g" +
                     " where genres.id = g.genreid and" +
-                    " g.movieid = " + "\"" + id + "\"" + " LIMIT "
+                    " g.movieid = " + "\"" + id + "\"" + " order by genres.name LIMIT "
                     + Integer.toString(limit)
             );
             while(genreData.next()){
@@ -232,4 +466,70 @@ public class Movies {
         }
         return actors;
     }
+
+    private String buildQuery(String title, String director, String star, String year){
+        String query = "SELECT m.id, m.director, m.year, m.title, r.rating from movies as m" +
+                ", ratings as r ";
+
+        boolean and = false;
+        boolean whereIncluded = false;
+
+        if(!star.equals("")){
+            query += ", stars as s, stars_in_movies as sim where ";
+            query += "s.id = sim.starid and m.id = sim.movieid and s.name LIKE ";
+            query += "\"" + star + "%\" ";
+            and = true;
+            whereIncluded = true;
+        }
+
+        if(!whereIncluded)
+            query += "where ";
+
+        if(!title.equals("")) {
+
+            if(and)
+                query += "and ";
+            query += "m.title LIKE \"" + title + "%\" ";
+            and = true;
+        }
+
+        if(!director.equals("")) {
+
+            if(and)
+                query += "and ";
+            query += "m.director LIKE \"" + director + "%\" ";
+            if(!and)
+                and = true;
+
+        }
+
+        if(!year.equals("")){
+            if(and)
+                query += "and ";
+            query += "m.year = \"" + year + "\" ";
+        }
+
+        query += "and m.id = r.movieid order by r.rating";
+
+        return query;
+    }
+
+    private String buildSalesValues(ArrayList<HashMap<String, String>> data){
+        String result = "";
+        String pattern = "yyyy-MM-dd";
+        SimpleDateFormat simpleDateFormat = new SimpleDateFormat(pattern);
+
+        for(int i = 0;  i < data.size(); ++i){
+            for(int j = 0; j < Integer.parseInt(data.get(i).get("quantity")); ++j){
+
+                result += "(\"" + data.get(i).get("ccid") + "\", ";
+                result += "\"" + data.get(i).get("movieid") + "\", ";
+                String cd =  simpleDateFormat.format(new Date());
+                result += "\"" + cd + "\"), ";
+            }
+        }
+
+        return result.substring(0, result.length() - 2);
+    }
+
 }

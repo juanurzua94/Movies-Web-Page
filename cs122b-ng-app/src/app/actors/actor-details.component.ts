@@ -1,6 +1,6 @@
 import { Component, OnInit, OnDestroy, ViewChild } from '@angular/core';
 import { ConfigService } from '../movies-list/movies-list.service';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { Subscription } from 'rxjs';
 import { ActorDetails } from './actor-details.model';
 @Component({
@@ -13,19 +13,24 @@ export class ActorDetailsComponent implements OnInit, OnDestroy{
   private actorInfo : Subscription;
 
   actorData : any;
-  constructor(private _ActivatedRoute: ActivatedRoute, private service : ConfigService){}
+  constructor(private _ActivatedRoute: ActivatedRoute, private service : ConfigService, private router: Router){}
 
   id : string = "";
   starredInMovies = [];
 
   ngOnInit(){
-      this.service.getActor((this._ActivatedRoute.snapshot.paramMap.get("actorId")));
-      this.actorInfo = this.service.getActorUpdateListener()
-      .subscribe(actorData => {
-          this.actorData = actorData;
-          this.starredInMovies = this.configureMovieData(this.actorData['movies']);
-      })
-      //console.log(this.service.getActor(this.id));
+      if(this.service.isLoggedIn() == "N"){
+        this.router.navigate(['api/login']);
+      }
+      else {
+        this.service.getActor((this._ActivatedRoute.snapshot.paramMap.get("actorId")));
+        this.actorInfo = this.service.getActorUpdateListener()
+        .subscribe(actorData => {
+            this.actorData = actorData;
+            this.starredInMovies = this.configureMovieData(this.actorData['movies']);
+        })
+        //console.log(this.service.getActor(this.id));
+    }
   }
 
   private configureMovieData(item : string){
@@ -35,7 +40,8 @@ export class ActorDetailsComponent implements OnInit, OnDestroy{
   }
 
   ngOnDestroy(){
-    this.actorInfo.unsubscribe();
+    if(this.service.isLoggedIn() == "Y")
+      this.actorInfo.unsubscribe();
   }
 
 

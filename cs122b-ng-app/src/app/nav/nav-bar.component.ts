@@ -1,4 +1,5 @@
 import { Component, OnInit } from '@angular/core';
+import { ConfigService } from '../movies-list/movies-list.service';
 
 @Component({
   selector: 'app-nav-bar',
@@ -8,8 +9,14 @@ import { Component, OnInit } from '@angular/core';
 
 export class NavBarComponent implements OnInit {
 
-  constructor() { }
+  constructor(private service : ConfigService) { }
 
   ngOnInit() { }
+
+  loggedIn(){
+    if(this.service.isLoggedIn() == "Y")
+      return "Y"
+    return "N";
+  }
 
 }

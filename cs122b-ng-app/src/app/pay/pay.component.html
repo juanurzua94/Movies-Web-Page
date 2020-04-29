@@ -1,0 +1,21 @@
+<div *ngIf="error; then errorBlock"></div>
+
+<ng-template #errorBlock>
+  <div class="alert alert-danger" role="alert">
+    A simple danger alert—check it out!
+  </div>
+</ng-template>
+
+<form (submit)="pay(postForm)" #postForm= "ngForm">
+  <div class="form-group">
+    <label for="first_name">First Name</label>
+    <input type="text" class="form-control" id="first_name" name= "first" ngModel>
+    <label for="last_name">Last Name</label>
+    <input type="text" class="form-control" id="last_name" name= "last" ngModel>
+    <label for="ccn">Credit Card Number</label>
+    <input type="text" class="form-control" id="ccn" name= "ccn" required ngModel>
+    <label for="ed">Expiration Date</label>
+    <input type="text" class="form-control" id="ed" name= "ed" required ngModel>
+  </div>
+  <button class="btn btn-lg btn-success" type="submit">Place Order</button>
+</form>

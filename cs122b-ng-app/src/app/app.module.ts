@@ -22,6 +22,14 @@ import {MatGridListModule} from '@angular/material/grid-list';
 import {NavBarComponent} from './nav/nav-bar.component';
 import { MovieDetailsComponent } from './movie-details/movie-details.component';
 import {MatTabsModule} from '@angular/material/tabs';
+import { LoginComponent } from './login/login.component';
+
+import {MatFormFieldModule} from '@angular/material/form-field';
+import { FormsModule }   from '@angular/forms';
+import { MainComponent } from './main/main.component';
+import {MatExpansionModule} from '@angular/material/expansion';
+import { ShoppingCartComponent} from './shopping-cart/shopping-cart.component';
+import {PayComponent} from './pay/pay.component';
 
 @NgModule({
   declarations: [
@@ -32,7 +40,11 @@ import {MatTabsModule} from '@angular/material/tabs';
     ActorDetailsComponent,
     ActorUrlPipe,
     NavBarComponent,
-    MovieDetailsComponent
+    MovieDetailsComponent,
+    LoginComponent,
+    MainComponent,
+    ShoppingCartComponent,
+    PayComponent
   ],
   imports: [
     BrowserModule,
@@ -47,9 +59,26 @@ import {MatTabsModule} from '@angular/material/tabs';
     CommonModule,
     MatMenuModule,
     MatGridListModule,
-    MatTabsModule
+    MatTabsModule,
+    MatFormFieldModule,
+    FormsModule,
+    MatExpansionModule
   ],
   providers: [ConvertMyList, ConvertMyGenreList, ActorUrlPipe],
   bootstrap: [AppComponent]
 })
-export class AppModule { }
+export class AppModule {
+  private loggedIn : boolean;
+
+  constructor(){
+    this.loggedIn = false;
+  }
+
+  userLoggedIn(){
+    this.loggedIn = true;
+  }
+
+  userLoggedOut(){
+    this.loggedIn = false;
+  }
+}
