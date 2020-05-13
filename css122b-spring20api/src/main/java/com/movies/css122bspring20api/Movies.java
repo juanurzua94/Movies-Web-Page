@@ -33,6 +33,9 @@ public class Movies {
     // private final String PASSWORD = "root";
 
     private final String PASSWORD = "root";
+
+    private PreparedStatement preparedStatement = null; // project 3
+
     public Movies(){
         movies = new ArrayList<>();
         try {
@@ -58,38 +61,6 @@ public class Movies {
                 }
 
         }
-        /*
-        HashMap<String, String> temp = null;
-        try{
-            Class.forName(CLASSNAME);
-            con = DriverManager.getConnection(
-                    DBURL, USER, PASSWORD
-            );
-            Statement statement = con.createStatement();
-            ResultSet data = statement.executeQuery(
-                    "select m.id, m.director, m.year, m.title, r.rating" +
-                            " from movies as m, ratings as r" +
-                            " where m.id = r.movieid order by r.rating desc limit 20"
-            );
-            while(data.next()){
-                    temp = new HashMap<>();
-
-                    temp.put(ID, data.getString(ID));
-                    temp.put(TITLE, data.getString(TITLE));
-                    temp.put(YEAR, data.getString(YEAR));
-                    temp.put(DIRECTOR, data.getString(DIRECTOR));
-                    temp.put(RATING, data.getString(RATING));
-                    temp.put(ACTORS, actorData(data.getString(ID), 3));
-                    temp.put(GENRES, genreData(data.getString(ID), 3));
-
-
-                    movies.add(temp);
-
-            }
-        }
-        catch(Exception e){
-            e.printStackTrace();
-        }*/
 
     }
 
@@ -105,12 +76,16 @@ public class Movies {
             @RequestParam("title") String title,
             @RequestParam("director") String director,
             @RequestParam("star") String star,
-            @RequestParam("year") String year
+            @RequestParam("year") String year,
+            @RequestParam("offset") String offset
     )
     {
+        System.out.println("THIS IS THE SEARCH OFFSET : " + offset);
+
         if(this.movies.size() > 0)
             this.movies.clear();
-        String query = buildQuery(title, director, star, year);
+
+        String query = buildQuery(title, director, star, year) + " LIMIT 50 OFFSET " + offset;
 
         HashMap<String, String> temp = null;
 
@@ -120,9 +95,9 @@ public class Movies {
                     DBURL, USER, PASSWORD
             );
 
-            Statement statement = con.createStatement();
+            preparedStatement = con.prepareStatement(query);
             System.out.println(query);
-            ResultSet data = statement.executeQuery(query);
+            ResultSet data = preparedStatement.executeQuery();
 
             while(data.next()){
 
@@ -167,16 +142,43 @@ public class Movies {
                     DBURL, USER, PASSWORD
             );
 
-            String query = "INSERT INTO sales (customerId, movieId, saleData) VALUES " + buildSalesValues(data);
+            String query = "INSERT INTO sales (customerId, movieId, saleData) VALUES (?, ? , ?)";// + buildSalesValues(data);
+
+            String pattern = "yyyy-MM-dd";
+            SimpleDateFormat simpleDateFormat = new SimpleDateFormat(pattern);
+            preparedStatement = con.prepareStatement(query);
+            for(int i = 0;  i < data.size(); ++i){
+                for(int j = 0; j < Integer.parseInt(data.get(i).get("quantity")); ++j){
+
+
+                    preparedStatement.setString(1, data.get(i).get("ccid"));
+                    preparedStatement.setString(2, data.get(i).get("movieid"));
+                    String cd = simpleDateFormat.format(new Date());
+                    preparedStatement.setString(3, cd);
+
+                    preparedStatement.addBatch();
+                    /*
+                    result += "(\"" + data.get(i).get("ccid") + "\", ";
+                    result += "\"" + data.get(i).get("movieid") + "\", ";
+                    String cd =  simpleDateFormat.format(new Date());
+                    result += "\"" + cd + "\"), ";*/
+                }
+            }
+
+
+            preparedStatement.executeBatch();
+
+            /*
             System.out.println(query);
             Statement statement = con.createStatement();
-            statement.executeUpdate(query);
+            statement.executeUpdate(query);*/
 
 
         } catch (Exception e){
             e.printStackTrace();
         } finally {
             try{
+
                 if(!con.isClosed())
                     con.close();
             } catch (Exception e){
@@ -197,10 +199,9 @@ public class Movies {
             con = DriverManager.getConnection(
                     DBURL, USER, PASSWORD
             );
-            Statement statement = con.createStatement();
-            ResultSet genreData = statement.executeQuery(
-                    "SELECT genres.name from genres ORDER BY genres.name"
-            );
+            String sqlQuery = "SELECT genres.name from genres ORDER BY genres.name";
+            preparedStatement = con.prepareStatement(sqlQuery);
+            ResultSet genreData = preparedStatement.executeQuery();
 
             while(genreData.next()){
                 genres.add(genreData.getString("name"));
@@ -220,8 +221,9 @@ public class Movies {
         return genres;
     }
 
-    @RequestMapping(value="/title/{letter}", method = RequestMethod.GET)
-    public ArrayList<HashMap<String, String>> getMoviesByTitle(@PathVariable("letter") String letter){
+    @RequestMapping(value="/title/{letter}/{offset}", method = RequestMethod.GET)
+    public ArrayList<HashMap<String, String>> getMoviesByTitle(@PathVariable("letter") String letter, @PathVariable("offset") String offset){
+        System.out.println("LETTER GET OFFSET : " + offset);
         if(this.movies.size() > 0)
             this.movies.clear();
         HashMap<String, String> temp;
@@ -231,13 +233,13 @@ public class Movies {
             con = DriverManager.getConnection(
                     DBURL, USER, PASSWORD
             );
-            Statement statement = con.createStatement();
-            ResultSet genreData = statement.executeQuery(
-                    "select m.id, m.director, m.year, m.title, r.rating" +
-                            " from movies as m, ratings as r " +
-                            " where m.id = r.movieid " +
-                            "and m.title LIKE \"" + letter + "%\" order by r.rating limit 1000"
-            );
+            String sqlQuery =      "select m.id, m.director, m.year, m.title, r.rating" +
+                    " from movies as m, ratings as r " +
+                    " where m.id = r.movieid " +
+                    "and m.title LIKE \"" + letter + "%\" order by r.rating limit 50 OFFSET " + offset;
+
+            preparedStatement = con.prepareStatement(sqlQuery);
+            ResultSet genreData = preparedStatement.executeQuery();
 
             while(genreData.next()){
                 temp = new HashMap<>();
@@ -266,9 +268,10 @@ public class Movies {
         return this.movies;
     }
 
-    @RequestMapping(value="/genre/{name}", method = RequestMethod.GET)
-    public ArrayList<HashMap<String, String>> getMoviesInGenre(@PathVariable("name") String name)
+    @RequestMapping(value="/genre/{name}/{offset}", method = RequestMethod.GET)
+    public ArrayList<HashMap<String, String>> getMoviesInGenre(@PathVariable("name") String name, @PathVariable("offset") String offset)
     {
+        System.out.println("GENRE NAME GET OFFSET: " + offset);
         if(this.movies.size() > 0)
             this.movies.clear();
 
@@ -278,15 +281,14 @@ public class Movies {
             con = DriverManager.getConnection(
                     DBURL, USER, PASSWORD
             );
-            Statement statement = con.createStatement();
-            ResultSet genreData = statement.executeQuery(
-                    "select m.id, m.director, m.year, m.title, r.rating" +
-                            " from movies as m, ratings as r, genres as g, genres_in_movies as gim" +
-                            " where g.name = \"" + name + "\" and m.id = r.movieid " +
-                            "and g.id = gim.genreid " +
-                            "and m.id = gim.movieid order by r.rating limit 1000"
-            );
 
+            String sqlQuery =  "select m.id, m.director, m.year, m.title, r.rating" +
+                    " from movies as m, ratings as r, genres as g, genres_in_movies as gim" +
+                    " where g.name = \"" + name + "\" and m.id = r.movieid " +
+                    "and g.id = gim.genreid " +
+                    "and m.id = gim.movieid order by r.rating limit 50 OFFSET " + offset;
+            preparedStatement = con.prepareStatement(sqlQuery);
+            ResultSet genreData = preparedStatement.executeQuery();
             while(genreData.next()){
                 temp = new HashMap<>();
                 temp.put(ID, genreData.getString(ID));
@@ -321,13 +323,11 @@ public class Movies {
             con = DriverManager.getConnection(
                     DBURL, USER, PASSWORD
             );
-            Statement statement = con.createStatement();
-
-            ResultSet movieData = statement.executeQuery(
-                    "SELECT m.title, m.year, m.director, m.id, r.rating"
+            String sqlQuery =    "SELECT m.title, m.year, m.director, m.id, r.rating"
                     + " from movies as m, ratings as r where m.title = \"" +
-                            name + "\" and r.movieid = m.id"
-            );
+                    name + "\" and r.movieid = m.id";
+            preparedStatement = con.prepareStatement(sqlQuery);
+            ResultSet movieData = preparedStatement.executeQuery();
             movieData.next();
 
             movieInfo.put("id", movieData.getString("id"));
@@ -360,16 +360,20 @@ public class Movies {
             con = DriverManager.getConnection(
                     DBURL, USER, PASSWORD
             );
-            Statement statement = con.createStatement();
 
-            ResultSet actorData = statement.executeQuery("select stars.name, stars.birthYear" +
-                    " from stars where stars.id = " + "\"" + id + "\"");
+            String actorQuery = "select stars.name, stars.birthYear" +
+                    " from stars where stars.id = " + "\"" + id + "\"";
 
-            Statement s = con.createStatement();
-            ResultSet actorMovies = s.executeQuery("select movies.title from" +
+            preparedStatement = con.prepareStatement(actorQuery);
+            ResultSet actorData = preparedStatement.executeQuery();
+
+            String sqlQuery = "select movies.title from" +
                     " movies, stars_in_movies as s " +
                     "where s.starId = " + "\"" +  id + "\"" + " and movies.id = s.movieid " +
-                    "order by movies.year desc, movies.title asc ");
+                    "order by movies.year desc, movies.title asc ";
+
+            preparedStatement = con.prepareStatement(sqlQuery);
+            ResultSet actorMovies = preparedStatement.executeQuery();
 
             actorData.next();
             response.put("name" , actorData.getString("name"));
@@ -401,11 +405,14 @@ public class Movies {
                   " s.id = sim.starid and s.name like \"stars.name\" group by s.name " +
                   ") desc";
 
-          ResultSet actorsData = s.executeQuery("select stars.name, stars.id" +
+          String sqlQuery = "select stars.name, stars.id" +
                   " from stars, stars_in_movies as s " +
                   "where stars.id = s.starid and " +
-                  "s.movieid = " + "\"" + id + "\"" + orderQuery + " LIMIT " + Integer.toString(limit));
+                  "s.movieid = " + "\"" + id + "\"" + orderQuery + " LIMIT " + Integer.toString(limit);
 
+          preparedStatement = con.prepareStatement(sqlQuery);
+
+          ResultSet actorsData = preparedStatement.executeQuery();
 
           while(actorsData.next()){
               actors += String.format(actorFormat, actorsData.getString("name"), actorsData.getString("id"));
@@ -422,13 +429,13 @@ public class Movies {
     private String genreData(String id, int limit){
         String genres = "";
         try {
-            Statement s = con.createStatement();
-            ResultSet genreData = s.executeQuery("select genres.name" +
+            String sqlQuery = "select genres.name" +
                     " from genres, genres_in_movies as g" +
                     " where genres.id = g.genreid and" +
                     " g.movieid = " + "\"" + id + "\"" + " order by genres.name LIMIT "
-                    + Integer.toString(limit)
-            );
+                    + Integer.toString(limit);
+            preparedStatement = con.prepareStatement(sqlQuery);
+            ResultSet genreData = preparedStatement.executeQuery();
             while(genreData.next()){
                 genres += genreData.getString("name");
                 genres += ", ";

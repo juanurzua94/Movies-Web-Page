@@ -2,10 +2,7 @@ package com.movies.css122bspring20api;
 
 import org.springframework.web.bind.annotation.*;
 
-import java.sql.Connection;
-import java.sql.DriverManager;
-import java.sql.ResultSet;
-import java.sql.Statement;
+import java.sql.*;
 import java.util.HashMap;
 
 @CrossOrigin(maxAge = 3600)
@@ -20,6 +17,8 @@ public class Payment {
     // private final String PASSWORD = "root";
 
     private final String PASSWORD = "root";
+
+    private PreparedStatement preparedStatement = null;
 
     @PostMapping
     public HashMap<String, String> validatePayment(@RequestBody HashMap<String, String> data){
@@ -40,12 +39,12 @@ public class Payment {
             con = DriverManager.getConnection(
                     DBURL, USER, PASSWORD
             );
-            Statement statement = con.createStatement();
             String query = "select * from " +
                     "creditcards where creditcards.id = \"" + ccn + "\" " +
                     "and creditcards.expiration = \"" + ed + "\"";
            System.out.println(query);
-            ResultSet data = statement.executeQuery(query);
+           preparedStatement = con.prepareStatement(query);
+            ResultSet data = preparedStatement.executeQuery();
 
             if(data.next())
                 return true;

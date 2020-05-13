@@ -16,6 +16,10 @@ import { NgForm } from '@angular/forms';
 })
 export class ConfigService {
 
+  private dashboardUrl = '/api/fablix/_dashboard'
+  private employeeLoginUrl = '/login';
+  private addActorUrl = '/addActor'
+  private addMovieUrl = '/addMovie'
   private apiUrl = '/api/movies';
   private loginUrl = '/api/login';
   private salesUrl = '/sales';
@@ -32,6 +36,7 @@ export class ConfigService {
   private actorInfoUpdated = new Subject<Object>();
   private movieInfoUpdated = new Subject<Object>();
   private genresInfoUpdated = new Subject<Object[]>();
+  private successfullyInsertedMovie = new Subject<boolean>();
   private movies : movie[] = [];
   private genres : object[] = [];
   private actors: Actor[] = [];
@@ -42,8 +47,14 @@ export class ConfigService {
   private totalPay = 0;
   private paymentSuccess = true;
   private customerId : string;
+  private employeeFailedLoggedIn : boolean;
+  private employeeLoggedIn : boolean;
 
-  constructor(private http: HttpClient, private router: Router, private serializer: UrlSerializer) { }
+
+  constructor(private http: HttpClient, private router: Router, private serializer: UrlSerializer) {
+    this.employeeLoggedIn = false;
+    this.employeeFailedLoggedIn = false;
+   }
 
   getMovies() {
     this.http.get<movie[]>(this.fullUrl + this.apiUrl)
@@ -54,9 +65,8 @@ export class ConfigService {
     })
   }
 
-  getMoviesinGenre(genre : string){
-    const fullUrl = `${this.fullUrl}${this.apiUrl}${this.genreItemUrl}${genre}`;
-    console.log(fullUrl);
+  getMoviesinGenre(genre : string, offset : number){
+    const fullUrl = `${this.fullUrl}${this.apiUrl}${this.genreItemUrl}${genre}/${offset}`;
     this.http.get<movie[]>(fullUrl)
     .subscribe(movieData => {
       this.movies = movieData;
@@ -76,8 +86,8 @@ export class ConfigService {
 
   }
 
-  getMoviesByLetter(letter : string){
-    const fullUrl = `${this.fullUrl}${this.apiUrl}${this.titleUrl}${letter}`;
+  getMoviesByLetter(letter : string, offset : number){
+    const fullUrl = `${this.fullUrl}${this.apiUrl}${this.titleUrl}${letter}/${offset}`;
     this.http.get<movie[]>(fullUrl)
     .subscribe(movieData=> {
       this.movies = movieData;
@@ -99,6 +109,10 @@ export class ConfigService {
 
   getGenresinfoUpdateListener(){
     return this.genresInfoUpdated.asObservable();
+  }
+
+  getAddedMovieUpdateListener(){
+    return this.successfullyInsertedMovie.asObservable();
   }
 
   getActor(actorId : string){
@@ -135,6 +149,46 @@ export class ConfigService {
         }
 
     });
+  }
+
+  employeeLogin(email: string, password: string){
+    const account = {email: email, password: password};
+    this.http.post<object>(
+      `${this.fullUrl}${this.dashboardUrl}${this.employeeLoginUrl}`, account
+    ).subscribe(responseData => {
+      if(responseData['employee'] == 'success'){
+        this.employeeLoggedIn = true;
+        this.router.navigate(['api/fablix/_dashboard']);
+      }
+      else {
+        this.employeeFailedLoggedIn = true;
+      }
+    });
+  }
+
+  addActor(name: string, birthYear: string) : boolean{
+    const star = {name: name, birthYear: birthYear};
+    this.http.post<object>(
+      `${this.fullUrl}${this.dashboardUrl}${this.addActorUrl}`, star
+    ).subscribe(responseData => {
+        if(responseData["RESULT"] == "ERROR"){
+          return false;
+        }
+    })
+    return true;
+  }
+
+  addMovie(title: string, director: string, year: string, actor_name: string, genre: string){
+    const movie = {title: title, director: director, year: year, actor_name: actor_name, genre: genre};
+    console.log(movie);
+    this.http.post<object>(
+      `${this.fullUrl}${this.dashboardUrl}${this.addMovieUrl}`, movie
+    ).subscribe(responseData => {
+        if(responseData["SUCCESS"] == "FALSE")
+          this.successfullyInsertedMovie.next(false);
+        else
+          this.successfullyInsertedMovie.next(true);
+    })
   }
 
   addToSales(){
@@ -220,7 +274,21 @@ export class ConfigService {
   }
 
   logout(){
+    this.worked = true;
     this.loggedin = false;
+  }
+
+  employeeLogout(){
+    this.employeeFailedLoggedIn = false;
+    this.employeeLoggedIn = false;
+  }
+
+  isEmployeeLoggedIn(){
+    return this.employeeLoggedIn;
+  }
+
+  employeeLoginError(){
+    return this.employeeFailedLoggedIn;
   }
 
   private encodeMovie(movieName : string){

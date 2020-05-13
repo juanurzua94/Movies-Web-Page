@@ -1,0 +1,188 @@
+<div class="alert alert-success" role="alert" *ngIf="successfullyAddedActor">
+  Successfully Inserted Actor!
+</div>
+
+<div class="alert alert-success" role="alert" *ngIf="unsuccessfullyAddedActor">
+  Error Unable to Add actor
+</div>
+
+<div class="alert alert-success" role="alert" *ngIf="successfullyAddedMovie == 'WORKED'">
+  Successfully Inserted Movie!
+</div>
+
+<div class="alert alert-danger" role="alert" *ngIf="successfullyAddedMovie == 'INCORRECT'">
+  Error Unable to Add Movie
+</div>
+
+<mat-tab-group dynamicHeight>
+    <mat-tab label="Add Actor" class="add_actor_tab">
+          <div class="rating_info">
+                <form (submit)="addActor(postForm)" #postForm= "ngForm">
+                  <div class="form-group">
+                    <label for="actor_name">Actor's Name</label>
+                    <input type="text" class="form-control" id="actor_name"  name="name" ngModel>
+                  </div>
+                  <div class="form-group">
+                    <label for="birth_year">Birth Year</label>
+                    <input type="text" class="form-control" id="birth_year" name="birthyear" ngModel>
+                  </div>
+                  <button type="submit" class="btn btn-primary">Insert</button>
+                </form>
+          </div>
+    </mat-tab>
+
+    <mat-tab label="Add Movie" class="add_movie_tab">
+      <form (submit)="addMovie(movieForm)" #movieForm= "ngForm">
+        <div class="form-group">
+          <label for="title">Title</label>
+          <input type="text" class="form-control" id="title" name="title" ngModel>
+        </div>
+        <div class="form-group">
+          <label for="director">Director</label>
+          <input type="text" class="form-control" id="director" name="director" ngModel>
+        </div>
+        <div class="form-group">
+          <label for="year">Year</label>
+          <input type="text" class="form-control" id="year" name="year" ngModel>
+        </div>
+        <div class="form-group">
+          <label for="star_name">Star's Name</label>
+          <input type="text" class="form-control" id="star_name" name="star_name" ngModel>
+        </div>
+        <div class="form-group">
+          <label for="genre">Genre</label>
+          <input type="text" class="form-control" id="genre" name="genre" ngModel>
+        </div>
+        <button type="submit" class="btn btn-primary">Insert</button>
+      </form>
+    </mat-tab>
+
+    <mat-tab label="MetaData" >
+      <mat-accordion>
+        <mat-expansion-panel>
+          <mat-expansion-panel-header>
+            <mat-panel-title>
+              movies
+            </mat-panel-title>
+          </mat-expansion-panel-header>
+          <ul class="list-group">
+            <li class="list-group-item">id varchar</li>
+            <li class="list-group-item">title varchar</li>
+            <li class="list-group-item">director varchar</li>
+            <li class="list-group-item">year integer</li>
+          </ul>
+        </mat-expansion-panel>
+
+        <mat-expansion-panel>
+            <mat-expansion-panel-header>
+            <mat-panel-title>
+              stars
+            </mat-panel-title>
+          </mat-expansion-panel-header>
+          <ul class="list-group">
+            <li class="list-group-item">id varchar</li>
+            <li class="list-group-item">name varchar</li>
+            <li class="list-group-item">birthYear integer</li>
+          </ul>
+        </mat-expansion-panel>
+
+        <mat-expansion-panel>
+          <mat-expansion-panel-header>
+          <mat-panel-title>
+            stars_in_movies
+          </mat-panel-title>
+        </mat-expansion-panel-header>
+        <ul class="list-group">
+          <li class="list-group-item">starid varchar</li>
+          <li class="list-group-item">movieid varchar</li>
+        </ul>
+      </mat-expansion-panel>
+
+      <mat-expansion-panel>
+        <mat-expansion-panel-header>
+        <mat-panel-title>
+          genres
+        </mat-panel-title>
+      </mat-expansion-panel-header>
+      <ul class="list-group">
+        <li class="list-group-item">id integer</li>
+        <li class="list-group-item">name varchar</li>
+      </ul>
+    </mat-expansion-panel>
+
+    <mat-expansion-panel>
+      <mat-expansion-panel-header>
+      <mat-panel-title>
+        genres_in_movies
+      </mat-panel-title>
+    </mat-expansion-panel-header>
+    <ul class="list-group">
+      <li class="list-group-item">genreid integer</li>
+      <li class="list-group-item">movieid varchar</li>
+    </ul>
+  </mat-expansion-panel>
+
+  <mat-expansion-panel>
+    <mat-expansion-panel-header>
+    <mat-panel-title>
+      creditcards
+    </mat-panel-title>
+  </mat-expansion-panel-header>
+  <ul class="list-group">
+    <li class="list-group-item">id varchar</li>
+    <li class="list-group-item">firstname varchar</li>
+    <li class="list-group-item">lastname varchar</li>
+    <li class="list-group-item">expiration date</li>
+  </ul>
+</mat-expansion-panel>
+
+<mat-expansion-panel>
+  <mat-expansion-panel-header>
+  <mat-panel-title>
+    customers
+  </mat-panel-title>
+</mat-expansion-panel-header>
+<ul class="list-group">
+  <li class="list-group-item">id integer</li>
+  <li class="list-group-item">firstname varchar</li>
+  <li class="list-group-item">lastname varchar</li>
+  <li class="list-group-item">ccid varchar</li>
+  <li class="list-group-item">address varchar</li>
+  <li class="list-group-item">email varchar</li>
+  <li class="list-group-item">password varchar</li>
+</ul>
+</mat-expansion-panel>
+
+<mat-expansion-panel>
+  <mat-expansion-panel-header>
+  <mat-panel-title>
+    sales
+  </mat-panel-title>
+</mat-expansion-panel-header>
+<ul class="list-group">
+  <li class="list-group-item">id integer</li>
+  <li class="list-group-item">customerid integer</li>
+  <li class="list-group-item">movieid varchar</li>
+  <li class="list-group-item">saleData date</li>
+</ul>
+</mat-expansion-panel>
+
+<mat-expansion-panel>
+  <mat-expansion-panel-header>
+  <mat-panel-title>
+    ratings
+  </mat-panel-title>
+</mat-expansion-panel-header>
+<ul class="list-group">
+  <li class="list-group-item">movieid varchar</li>
+  <li class="list-group-item">rating float</li>
+  <li class="list-group-item">numVotes integer</li>
+</ul>
+</mat-expansion-panel>
+
+      </mat-accordion>
+
+    </mat-tab>
+
+
+</mat-tab-group>

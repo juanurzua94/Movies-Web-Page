@@ -2,11 +2,9 @@ package com.movies.css122bspring20api;
 
 import org.springframework.web.bind.annotation.*;
 
-import java.sql.Connection;
-import java.sql.DriverManager;
-import java.sql.ResultSet;
-import java.sql.Statement;
+import java.sql.*;
 import java.util.HashMap;
+import org.jasypt.util.password.StrongPasswordEncryptor;
 
 @CrossOrigin(maxAge = 3600)
 @RestController
@@ -22,6 +20,10 @@ public class Login {
     private final String PASSWORD = "root";
 
     private String userId = "";
+
+    private final String reCaptchaKey = "6LcHFfYUAAAAAB7_6689P_l2tmhEV9VO0xNXcKUY";
+
+    private PreparedStatement preparedStatement = null;
 
     @PostMapping
     public HashMap<String, String> test(@RequestBody HashMap<String, String> data){
@@ -39,20 +41,24 @@ public class Login {
     }
 
     private boolean checkIfUserExists(String email, String password){
+        boolean success = false;
         try {
             Class.forName(CLASSNAME);
             con = DriverManager.getConnection(
               DBURL, USER, PASSWORD
             );
-            Statement statement = con.createStatement();
-            ResultSet user = statement.executeQuery(
-                "Select id from customers where" +
-                        " customers.email = \"" + email + "\"" +
-                        " and customers.password = \"" + password + "\""
-            );
+
+            String sqlQuery = "Select * from customers where" +
+                    " customers.email = \"" + email + "\"";
+
+            preparedStatement = con.prepareStatement(sqlQuery);
+            ResultSet user = preparedStatement.executeQuery();
+
             if(user.next()) {
+                String encryptedPassword = user.getString("Password");
+                success = new StrongPasswordEncryptor().checkPassword(password, encryptedPassword);
                 this.userId = user.getString("id");
-                return true;
+                return success;
             }
         } catch (Exception e){
             e.printStackTrace();
@@ -65,7 +71,7 @@ public class Login {
                 e.printStackTrace();
             }
         }
-        return false;
+        return success;
     }
 
 }

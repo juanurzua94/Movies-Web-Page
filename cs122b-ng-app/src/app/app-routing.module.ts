@@ -7,6 +7,8 @@ import { LoginComponent } from './login/login.component';
 import { MainComponent } from './main/main.component';
 import { ShoppingCartComponent } from './shopping-cart/shopping-cart.component';
 import { PayComponent } from './pay/pay.component';
+import { DashBoardComponent } from './dashboard/dashboard.component';
+import { EmployeeLoginComponent } from './dashboard/employee-login.component';
 
 
 const routes: Routes = [
@@ -21,6 +23,8 @@ const routes: Routes = [
   {path: 'api/home', component: MainComponent},
   {path: 'api/shoppingcart', component: ShoppingCartComponent},
   {path: 'api/pay', component: PayComponent},
+  {path: 'api/fablix/_dashboard', component: DashBoardComponent},
+  {path: 'api/fablix/_dashboard/login', component: EmployeeLoginComponent},
   {path: '', redirectTo: 'api/movies', pathMatch: 'full'}
 ];
 

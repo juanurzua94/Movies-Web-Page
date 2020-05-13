@@ -6,6 +6,7 @@ import { MatPaginator } from '@angular/material/paginator';
 import { MatTableDataSource } from '@angular/material/table';
 import {Actor} from './actor.model';
 import { Router, ActivatedRoute } from '@angular/router';
+import { IfStmt, ThrowStmt } from '@angular/compiler';
 
 @Component({
   selector : 'app-movies-list',
@@ -23,7 +24,9 @@ export class MoviesListComponent implements OnInit, OnDestroy{
   displayedColumns = ['title', 'year', 'director', 'rating', 'actors', 'genres'];
   added = false;
 
-  offset : number;
+  pageOffset : number;
+  databaseOffset : number;
+
   genreName : string;
   letter : string;
 
@@ -31,7 +34,18 @@ export class MoviesListComponent implements OnInit, OnDestroy{
   inLetter : boolean;
   inSearch : boolean;
 
-  itemsDisplayingFromMovies : number;
+  numberOfCurrentItems : number;
+
+  sorted_by_rating_asc : boolean;
+  sorted_by_rating_desc : boolean;
+
+  sorted_by_title_asc : boolean;
+  sorted_by_title_desc: boolean;
+
+
+  show_next_page : boolean;
+
+  searchData : any;
 
   dataSource = new MatTableDataSource<movie>(this.movies);
   @ViewChild(MatPaginator, {static : true}) paginator;
@@ -39,23 +53,18 @@ export class MoviesListComponent implements OnInit, OnDestroy{
     this.inGenre = false;
     this.inLetter = false;
     this.inSearch = false;
-    this.offset = 0;
+    this.pageOffset = 0;
+    this.databaseOffset = 0;
     this.itemsToDisplay = 10;
-    this.itemsDisplayingFromMovies = 0;
+    this.numberOfCurrentItems = 0;
     this._activatedRoute.params.subscribe(params => {
-        this.determineServiceInstruction(this._activatedRoute.snapshot.paramMap);
+        //this.determineServiceInstruction(this._activatedRoute.snapshot.paramMap);
     });
+    this.sorted_by_title_desc = true;
+    this.sorted_by_rating_desc = true;
+    this.show_next_page = false;
+
   }
-
-
-  /*
-  getActorData($event){
-    alert($event['toElement']['innerText']);
-  }
-
-  getGenreMovies($event){
-    alert($event['toElement']['innerText']);
-  }*/
 
   ngOnInit(){
       if(this.service.isLoggedIn() == "N"){
@@ -69,14 +78,14 @@ export class MoviesListComponent implements OnInit, OnDestroy{
         if(this._activatedRoute.snapshot.paramMap.get("genreName") != null){
           this.inGenre = true;
           this.genreName = this._activatedRoute.snapshot.paramMap.get("genreName")
-          this.service.getMoviesinGenre(this.genreName);
-
-            this.movieList = this.service.getMovieUpdateListener()
+          this.service.getMoviesinGenre(this.genreName, this.databaseOffset);
+          this.movieList = this.service.getMovieUpdateListener()
             .subscribe((movies : movie[]) => {
               this.movies = movies;
+              this.moviesForDisplay = [];
               this.insertMoviesForDisplay();
-              this.dataSource = new MatTableDataSource<movie>(this.movies);
-              this.dataSource.paginator = this.paginator;
+              //this.dataSource = new MatTableDataSource<movie>(this.movies);
+              //this.dataSource.paginator = this.paginator;
 
             });
 
@@ -85,29 +94,33 @@ export class MoviesListComponent implements OnInit, OnDestroy{
         else if(this._activatedRoute.snapshot.paramMap.get("letter") != null){
           this.inLetter = true;
           this.letter = this._activatedRoute.snapshot.paramMap.get("letter")
-          this.service.getMoviesByLetter(this.letter);
+          this.service.getMoviesByLetter(this.letter, this.databaseOffset);
           this.movieList = this.service.getMovieUpdateListener()
           .subscribe((movies : movie[]) =>{
             this.movies = movies;
+            this.moviesForDisplay = [];
             this.insertMoviesForDisplay();
 
-           this.dataSource = new MatTableDataSource<movie>(this.movies);
-           this.dataSource.paginator = this.paginator;
+           //this.dataSource = new MatTableDataSource<movie>(this.movies);
+          // this.dataSource.paginator = this.paginator;
 
           });
         }
 
         else if(this._activatedRoute.snapshot.queryParams.title != undefined) {
             this.inSearch = true;
-            console.log(this._activatedRoute.snapshot.queryParams);
-            this.service.getQueryResults(this._activatedRoute.snapshot.queryParams);
+            this.searchData = this.copyQueryObject(this._activatedRoute.snapshot.queryParams);
+            this.searchData['offset'] = this.databaseOffset;
+            console.log(this.searchData);
+            this.service.getQueryResults(this.searchData);
             this.movieList = this.service.getMovieUpdateListener()
             .subscribe((movies : movie[]) =>{
               this.movies = movies;
+              this.moviesForDisplay = [];
               this.insertMoviesForDisplay();
 
-             this.dataSource = new MatTableDataSource<movie>(this.movies);
-             this.dataSource.paginator = this.paginator;
+             //this.dataSource = new MatTableDataSource<movie>(this.movies);
+             //this.dataSource.paginator = this.paginator;
             })
         }
         else {
@@ -116,82 +129,202 @@ export class MoviesListComponent implements OnInit, OnDestroy{
           this.movieList = this.service.getMovieUpdateListener()
           .subscribe((movies: movie[]) =>{
             this.movies = movies;
+            this.moviesForDisplay = [];
             this.insertMoviesForDisplay();
 
-           this.dataSource = new MatTableDataSource<movie>(this.movies);
-           this.dataSource.paginator= this.paginator;
+           //this.dataSource = new MatTableDataSource<movie>(this.movies);
+           //this.dataSource.paginator= this.paginator;
           })
         }
     }
+  }
+
+  copyQueryObject(data : any){
+    let temp = {};
+    for(let [key, value] of Object.entries(data)){
+      temp[key] = value;
+    }
+    return temp;
   }
 
   myEval(items){
     return eval(items);
   }
 
+  /*
   determineServiceInstruction(data : any){
     if(data.get('genreName') != null){
       this.service.getMoviesinGenre(data.get("genreName"));
       this.movieList = this.service.getMovieUpdateListener()
               .subscribe((movies : movie[]) => {
                 this.movies = movies;
+                this.moviesForDisplay = [];
                 this.insertMoviesForDisplay();
 
-                this.dataSource = new MatTableDataSource<movie>(this.movies);
-                this.dataSource.paginator = this.paginator;
+               // this.dataSource = new MatTableDataSource<movie>(this.movies);
+               // this.dataSource.paginator = this.paginator;
               });
       }
-    }
+    }*/
 
     addToShoppingCart(dataTitle : string, dataId : string){
       this.service.addToShoppingCart(dataTitle, dataId);
       this.added = true;
     }
 
-    setItemsPer(data: number){
-      if(this.itemsToDisplay < data){
-        this.itemsDisplayingFromMovies += (data - this.itemsToDisplay);
+    setItemsPer(data: number){ // refactor
+
+      if(this.pageOffset + data <= 50){
+        this.numberOfCurrentItems = 0;
+        this.itemsToDisplay = data;
+        this.moviesForDisplay = [];
+        this.insertMoviesForDisplay();
+      } else {
+          this.databaseOffset += this.pageOffset;
+          this.pageOffset = 0;
+          this.numberOfCurrentItems = 0;
+          this.itemsToDisplay = data;
+
+          if(this.inGenre){
+            this.getNextSetOfMoviesFromGenre();
+          }
+          else if(this.inLetter){
+            this.getNextSetOfMoviesFromLetter();
+          }
+          else{
+            this.searchData['offset'] = this.databaseOffset;
+            this.getNextSetOfMoviesFromSearch();
+          }
+
       }
-      if(this.itemsDisplayingFromMovies > data){
-        this.itemsDisplayingFromMovies -= (this.itemsToDisplay - data);
-      }
-      this.itemsToDisplay = data;
-      this.insertMoviesForDisplay();
     }
 
-    private insertMoviesForDisplay(){
-      this.moviesForDisplay = [];
-      console.log(this.itemsDisplayingFromMovies);
+    insertMoviesForDisplay(){
+      console.log("OFFSET : " + this.pageOffset);
+      console.log("ITEMS TO DISPLAY : " + this.itemsToDisplay)
+      for(let i = this.numberOfCurrentItems + this.pageOffset; i < (this.itemsToDisplay + this.pageOffset) && i < this.movies.length; ++i){
+          console.log("Excuted ? " + i);
+          this.moviesForDisplay.push(this.movies[i]);
+          ++this.numberOfCurrentItems;
+        }
+      console.log(this.moviesForDisplay);
+      /*
       for(let i = this.itemsDisplayingFromMovies; i < this.itemsToDisplay && i < this.movies.length; ++i){
         this.moviesForDisplay.push(this.movies[i]);
       }
+
       if(this.itemsDisplayingFromMovies == 0)
-        this.itemsDisplayingFromMovies = 10;
+        this.itemsDisplayingFromMovies = 10;*/
     }
 
     sortByTitle(){
-      this.movies.sort((a, b) => (a.title > b.title) ? 1 : -1);
-      this.dataSource = new MatTableDataSource<movie>(this.movies);
-      this.dataSource.paginator = this.paginator;
+
+      if(this.sorted_by_title_desc){
+        this.moviesForDisplay.sort((a, b) => (a.title > b.title) ? 1 : -1);
+        this.sorted_by_title_desc = false;
+        this.sorted_by_title_asc = true;
+      }
+      else {
+        this.moviesForDisplay.sort((a, b) => (a.title < b.title) ? 1 : -1);
+        this.sorted_by_title_asc = false;
+        this.sorted_by_title_desc = true;
+      }
+
+
+      //this.dataSource = new MatTableDataSource<movie>(this.movies);
+      //this.dataSource.paginator = this.paginator;
 
     }
 
     sortByRating(){
-      this.movies.sort((a, b) => (a.rating > b.rating) ? 1 : -1);
-      this.dataSource = new MatTableDataSource<movie>(this.movies);
-      this.dataSource.paginator = this.paginator;
+      if(this.sorted_by_rating_desc){
+        this.moviesForDisplay.sort((a, b) => (a.rating > b.rating) ? 1 : -1);
+        this.sorted_by_rating_desc = false;
+        this.sorted_by_rating_asc = true;
+      }
+      else {
+        this.moviesForDisplay.sort((a, b)=> (a.rating < b.rating) ? 1 : -1);
+        this.sorted_by_rating_asc = false;
+        this.sorted_by_rating_desc = true;
+      }
+      //this.dataSource = new MatTableDataSource<movie>(this.movies);
+      //this.dataSource.paginator = this.paginator;
 
     }
 
     displayPrevItems(){
+      if(this.pageOffset >= (this.itemsToDisplay)){
+        this.pageOffset -= (this.itemsToDisplay)
+        this.numberOfCurrentItems = 0;
+        this.moviesForDisplay = [];
+        this.insertMoviesForDisplay();
+      }
+      else {
+        if(this.databaseOffset >= 50){
+          this.pageOffset = 50 - this.itemsToDisplay;
+          this.numberOfCurrentItems = 0;
+          this.databaseOffset -= 50;
+          if(this.inGenre){
+            this.getNextSetOfMoviesFromGenre();
+          }
+          else if(this.inLetter){
+            this.getNextSetOfMoviesFromLetter();
+          }
+          else{
+            this.searchData['offset'] = this.databaseOffset;
+            this.getNextSetOfMoviesFromSearch();
+          }
+        }
+        else if(this.databaseOffset > 0){
+          this.pageOffset = 50 - this.itemsToDisplay;
+          this.numberOfCurrentItems = 0;
+          this.databaseOffset -= this.databaseOffset;
+
+          if(this.inGenre){
+            this.getNextSetOfMoviesFromGenre();
+          }
+          else if(this.inLetter){
+            this.getNextSetOfMoviesFromLetter();
+          }
+          else{
+            this.searchData['offset'] = this.databaseOffset;
+            this.getNextSetOfMoviesFromSearch();
+          }
+        }
+      }
+        /*
       if(this.offset >= 100){
         this.offset -= 100;
-      }
+      }*/
 
     }
 
     displayNextItems(){
-      if(this.itemsDisplayingFromMovies == 100){
+
+      if(this.pageOffset + (this.itemsToDisplay) < 50){
+        this.pageOffset += (this.itemsToDisplay);
+        this.numberOfCurrentItems = 0;
+        this.moviesForDisplay = [];
+        this.insertMoviesForDisplay();
+      }
+      else {
+          this.pageOffset = 0;
+          this.numberOfCurrentItems = 0;
+          this.databaseOffset += 50;
+          if(this.inGenre){
+            this.getNextSetOfMoviesFromGenre();
+          }
+          else if(this.inLetter){
+            this.getNextSetOfMoviesFromLetter();
+          }
+          else{
+            this.searchData['offset'] = this.databaseOffset;
+            this.getNextSetOfMoviesFromSearch();
+          }
+      }
+
+      /*
+      if(this.numberOfCurrentItems == 100){
         this.offset += 100;
         if(this.inGenre){
           this.service.getMoviesinGenre(this.genreName);
@@ -199,18 +332,36 @@ export class MoviesListComponent implements OnInit, OnDestroy{
           this.movieList = this.service.getMovieUpdateListener()
           .subscribe((movies : movie[]) => {
             this.movies = movies;
+            this.moviesForDisplay = [];
             this.insertMoviesForDisplay();
-            this.dataSource = new MatTableDataSource<movie>(this.movies);
-            this.dataSource.paginator = this.paginator;
+            //this.dataSource = new MatTableDataSource<movie>(this.movies);
+            //this.dataSource.paginator = this.paginator;
 
           });
         }
       }
       else {
+        this.moviesForDisplay = [];
         this.insertMoviesForDisplay();
-        this.itemsDisplayingFromMovies += this.itemsToDisplay;
-      }
+        this.numberOfCurrentItems += this.itemsToDisplay;
+      }*/
     }
+
+    getNextSetOfMoviesFromGenre(){
+
+      this.service.getMoviesinGenre(this.genreName, this.databaseOffset);
+
+    }
+
+    getNextSetOfMoviesFromLetter(){
+      this.service.getMoviesByLetter(this.letter, this.databaseOffset);
+    }
+
+    getNextSetOfMoviesFromSearch(){
+      this.service.getQueryResults(this.searchData);
+    }
+
+
 
   ngOnDestroy(){
     if(this.service.isLoggedIn() == "Y")

@@ -31,6 +31,8 @@ import {MatExpansionModule} from '@angular/material/expansion';
 import { ShoppingCartComponent} from './shopping-cart/shopping-cart.component';
 import {PayComponent} from './pay/pay.component';
 
+import { DashBoardComponent } from './dashboard/dashboard.component';
+import {EmployeeLoginComponent} from './dashboard/employee-login.component'
 @NgModule({
   declarations: [
     AppComponent,
@@ -44,7 +46,10 @@ import {PayComponent} from './pay/pay.component';
     LoginComponent,
     MainComponent,
     ShoppingCartComponent,
-    PayComponent
+    PayComponent,
+    DashBoardComponent,
+    EmployeeLoginComponent
+
   ],
   imports: [
     BrowserModule,

@@ -22,7 +22,7 @@ export class LoginComponent{
   }
 
   onLogIn(form: NgForm){
-
+    console.log(form.value);
     this.service.login(form.value.email, form.value.password);
     if(!this.service.getWorked()){
       form.resetForm();
