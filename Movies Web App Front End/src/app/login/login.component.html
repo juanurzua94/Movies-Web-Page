@@ -1,0 +1,18 @@
+<div class="alert alert-danger" role="alert" *ngIf="incorrect">
+  Incorrect Email/Password Combination
+</div>
+<form (submit)="onLogIn(postForm)" #postForm= "ngForm">
+  <div class="form-group">
+    <label for="exampleInputEmail1">Email address</label>
+    <input type="email" class="form-control" id="exampleInputEmail1" aria-describedby="emailHelp" name="email" ngModel>
+    <small id="emailHelp" class="form-text text-muted">We'll never share your email with anyone else.</small>
+  </div>
+  <div class="form-group">
+    <label for="exampleInputPassword1">Password</label>
+    <input type="password" class="form-control" id="exampleInputPassword1" name="password" ngModel>
+  </div>
+
+  <button type="submit" class="btn btn-primary g-recaptcha"  data-sitekey="6LcHFfYUAAAAAGi-6mbghU6yxc_3iPoldNIv-B29">
+    Submit
+  </button>
+</form>

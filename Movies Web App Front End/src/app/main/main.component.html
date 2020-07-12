@@ -1,0 +1,111 @@
+<div class="jumbotron jumbotron-fluid" id="jumbo">
+  <div class="container">
+
+      <h1 class="display-4">Welcome to the Home Page!</h1>
+
+  </div>
+
+  <form (submit)="getSearchResults(searchForm)" #searchForm = "ngForm">
+
+
+        <div class="form-group  autocomplete">
+
+          <input type="text" name="search_bar" class="form-control" id="search_bar"
+          placeholder="Search" (keydown)="highLightNextSuggested()"
+          (keyup)="highlightPrevSuggested()"
+          (ngModelChange)="getSuggestedResults($event)" ngModel>
+
+          <div id="autocomplete-list" class="autocomplete-items" *ngIf="displaySuggested">
+              <div *ngFor="let movie of movies" routerLink="/api/movies/movie/{{movie}}" class="suggested">
+                {{movie}}
+              </div>
+          </div>
+
+        </div>
+
+
+        <!--
+        <ul class="list-group" style="width:25%" *ngIf="movies.length > 0">
+          <a *ngFor="let movie of movies" routerLink="/api/movies/movie/{{movie}}">
+          <li class="list-group-item" >
+            {{movie}}
+          </li>
+          </a>
+        </ul>
+
+-->
+        <button class="btn btn-primary" type="submit">Search</button>
+
+
+  </form>
+
+</div>
+
+<mat-tab-group dynamicHeight>
+
+
+    <mat-tab label="Search">
+
+      <form (submit)="getQueryData(queryForm)" #queryForm ="ngForm">
+        <div class="form-group">
+          <label for="exampleFormControlInput1">Title</label>
+          <input type="text" name="title" class="form-control" id="exampleFormControlInput1" ngModel>
+          <label for="exampleFormControlInput2">Director</label>
+          <input type="text" name="director" class="form-control" id="exampleFormControlInput2" ngModel>
+          <label for="exampleFormControlInput3">Year</label>
+          <input type="text" name="year" class="form-control" id="exampleFormControlInput3" ngModel>
+          <label for="exampleFormControlInput4">Star</label>
+          <input type="text" name="star" class="form-control" id="exampleFormControlInput4" ngModel>
+          <button class="btn btn-primary" type="submit">Search</button>
+        </div>
+      </form>
+
+    </mat-tab>
+
+
+    <mat-tab label="Browse">
+
+      <mat-accordion>
+        <mat-expansion-panel>
+          <mat-expansion-panel-header>
+            <mat-panel-title>
+              Browse by Genre
+            </mat-panel-title>
+            <mat-panel-description>
+              List of Available Genres
+            </mat-panel-description>
+          </mat-expansion-panel-header>
+          <ul class="list-group">
+            <a *ngFor="let genre of genres" routerLink="/api/movies/genre/{{genre}}">
+              <li class="list-group-item">
+                {{genre}}
+              </li>
+            </a>
+          </ul>
+        </mat-expansion-panel>
+
+        <mat-expansion-panel>
+            <mat-expansion-panel-header>
+            <mat-panel-title>
+              Browse by Title
+            </mat-panel-title>
+            <mat-panel-description>
+              Choose a Letter
+            </mat-panel-description>
+          </mat-expansion-panel-header>
+          <ul class="list-group">
+            <a *ngFor="let letter of letters" routerLink="/api/movies/title/{{letter}}">
+              <li class="list-group-item">
+                {{letter}}
+              </li>
+            </a>
+          </ul>
+        </mat-expansion-panel>
+
+      </mat-accordion>
+
+    </mat-tab>
+
+
+
+</mat-tab-group>
